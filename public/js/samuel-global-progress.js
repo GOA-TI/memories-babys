@@ -140,6 +140,11 @@
     function unlockUploadNavigation() {
         document.body.classList.remove('samuel-upload-preview-open', 'samuel-upload-publishing');
         document.body.classList.add('samuel-upload-background-active');
+        document.documentElement.classList.add('samuel-upload-background-active');
+
+        if (window.samuelPageScrollLock && window.samuelPageScrollLock.forceUnlock) {
+            window.samuelPageScrollLock.forceUnlock();
+        }
 
         ['samuelUploadPreviewBackdrop', 'samuelUploadPreview'].forEach(function (id) {
             var el = document.getElementById(id);
@@ -158,6 +163,7 @@
 
     function lockUploadNavigationEnded() {
         document.body.classList.remove('samuel-upload-background-active');
+        document.documentElement.classList.remove('samuel-upload-background-active');
     }
 
     window.samuelGlobalProgress = {

@@ -47,6 +47,9 @@
                 Hasta {{ config('samuel.upload.max_files_per_post') }} archivos · {{ config('samuel.upload.max_mb') }} MB por archivo · videos ~{{ config('samuel.upload.max_video_minutes', 3) }} min
             </p>
             <div id="samuel-upload-thumbs" class="samuel-upload-thumbs" hidden aria-live="polite"></div>
+            <p id="samuel-upload-thumbs-hint" class="samuel-upload-form__hint samuel-upload-form__hint--center samuel-upload-thumbs__order-hint" hidden>
+                La <strong>1</strong> es la portada. Usa las flechas en cada miniatura para cambiar el orden.
+            </p>
         </div>
 
         @include('partials.memory-moment-fields', ['moment' => now(), 'defaultTaken' => \App\Support\MemoryMomentInput::defaultTakenMode()])
@@ -134,6 +137,10 @@
             if (thumbs) {
                 thumbs.hidden = true;
                 thumbs.innerHTML = '';
+            }
+            var orderHint = document.getElementById('samuel-upload-thumbs-hint');
+            if (orderHint) {
+                orderHint.hidden = true;
             }
             return;
         }

@@ -300,9 +300,11 @@
             if (result.ok) {
                 emit({ type: 'done', jobId: jobId, label: '¡Recuerdo guardado!' });
                 endUploadNavigationLock();
-                if (result.redirect) {
+                if (result.redirect && document.body.classList.contains('samuel-upload-background-active')) {
                     window.setTimeout(function () {
-                        window.location.href = result.redirect;
+                        if (document.getElementById('samuel-upload-form')) {
+                            window.location.href = result.redirect;
+                        }
                     }, 380);
                 }
                 return;
@@ -366,7 +368,11 @@
                 if (typeof onStart === 'function') {
                     onStart();
                 }
-                return runJob(job);
+                return new Promise(function (resolve) {
+                    window.setTimeout(function () {
+                        resolve(runJob(job));
+                    }, 0);
+                });
             });
     }
 
@@ -401,9 +407,11 @@
         if (data.type === 'progress' || data.type === 'start' || data.type === 'done' || data.type === 'error') {
             emit(data);
         }
-        if (data.type === 'done' && data.redirect && !activeJobId) {
+        if (data.type === 'done' && data.redirect && !activeJobId && document.getElementById('samuel-upload-form')) {
             window.setTimeout(function () {
-                window.location.href = data.redirect;
+                if (document.getElementById('samuel-upload-form')) {
+                    window.location.href = data.redirect;
+                }
             }, 420);
         }
     }

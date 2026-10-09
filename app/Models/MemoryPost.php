@@ -58,13 +58,48 @@ class MemoryPost extends Model
         return $this->hasMany(MemoryPostComment::class, 'memory_post_id')->orderBy('created_at');
     }
 
-    /** @return list<array{id: int, body: string, created_at_human: string, author: array{name: string, emoji: string, photo_url: ?string}, can_delete: bool}> */
+    public function commentsCount(): int
+    {
+        if ($this->relationLoaded('comments')) {
+            return $this->comments->count();
+        }
+
+        return $this->comments()->count();
+    }
+
+    /** @return list<array> */
     public function commentsPayloadFor(?int $viewerMemberId): array
     {
-        return $this->comments
-            ->map(fn (MemoryPostComment $comment) => $comment->toWallPayload($viewerMemberId))
-            ->values()
-            ->all();
+        $all = $this->relationLoaded('comments')
+            ? $this->comments
+            : $this->comments()->with(['member', 'parent.member'])->get();
+
+        $byId = $all->keyBy('id');
+        $rootIdFor = function (MemoryPostComment $comment) use ($byId): int {
+            $current = $comment;
+            while ($current->parent_comment_id && $byId->has($current->parent_comment_id)) {
+                $current = $byId->get($current->parent_comment_id);
+            }
+
+            return $current->id;
+        };
+
+        $topLevel = $all->whereNull('parent_comment_id')->sortBy('created_at')->values();
+        $repliesByRoot = $all->whereNotNull('parent_comment_id')->groupBy(
+            fn (MemoryPostComment $c) => $rootIdFor($c)
+        );
+
+        return $topLevel->map(function (MemoryPostComment $comment) use ($repliesByRoot, $byId, $viewerMemberId) {
+            $replies = ($repliesByRoot->get($comment->id) ?? collect())->sortBy('created_at')->values();
+            foreach ($replies as $reply) {
+                if ($reply->parent_comment_id && $byId->has($reply->parent_comment_id)) {
+                    $reply->setRelation('parent', $byId->get($reply->parent_comment_id));
+                }
+            }
+            $comment->setRelation('replies', $replies);
+
+            return $comment->toWallPayload($viewerMemberId, true);
+        })->values()->all();
     }
 
     public function coverMedia(): ?MemoryMedia

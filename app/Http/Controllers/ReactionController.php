@@ -4,13 +4,14 @@ namespace App\Http\Controllers;
 
 use App\Models\MemoryPost;
 use App\Models\MemoryReaction;
+use App\Services\FamilyNotificationService;
 use App\Support\FamilySession;
 use App\Support\ReactionCatalog;
 use Illuminate\Http\Request;
 
 class ReactionController extends Controller
 {
-    public function store(Request $request, MemoryPost $post)
+    public function store(Request $request, MemoryPost $post, FamilyNotificationService $notifier)
     {
         $member = FamilySession::member();
         abort_unless($member, 403);
@@ -29,6 +30,7 @@ class ReactionController extends Controller
             ->where('family_member_id', $member->id)
             ->first();
 
+        $createdNew = false;
         if ($existing && $existing->emotion === $emotion) {
             $existing->delete();
         } elseif ($existing) {
@@ -39,6 +41,11 @@ class ReactionController extends Controller
                 'family_member_id' => $member->id,
                 'emotion' => $emotion,
             ]);
+            $createdNew = true;
+        }
+
+        if ($createdNew) {
+            $notifier->notifyPostReaction($post, $member, $emotion);
         }
 
         $post->load(['reactions.member']);

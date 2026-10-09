@@ -9,6 +9,10 @@ class FamilyNotification extends Model
 {
     public const TYPE_NEW_POST = 'new_post';
 
+    public const TYPE_POST_COMMENT = 'post_comment';
+
+    public const TYPE_POST_REACTION = 'post_reaction';
+
     protected $fillable = [
         'family_member_id',
         'actor_family_member_id',

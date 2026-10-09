@@ -26,6 +26,12 @@
                 window.scrollTo(0, scrollLockY);
             }
         },
+        forceUnlock: function () {
+            scrollLockDepth = 0;
+            document.documentElement.classList.remove('samuel-scroll-locked');
+            document.body.classList.remove('samuel-scroll-locked');
+            document.body.style.top = '';
+        },
     };
 
     function closeUploadPreviewIfOpen() {

@@ -123,7 +123,7 @@
         }
         if (!notifications.length) {
             this.list.innerHTML =
-                '<p class="cp-mobile-notif-empty">No hay avisos todavía. Te avisaremos cuando alguien publique un recuerdo.</p>';
+                '<p class="cp-mobile-notif-empty">No hay avisos todavía. Te avisaremos cuando alguien publique, comente o reaccione.</p>';
             return;
         }
         var self = this;

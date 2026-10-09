@@ -290,7 +290,11 @@
         nodes.backdrop.classList.remove('is-open');
         document.body.classList.remove('samuel-upload-preview-open');
         if (window.samuelPageScrollLock) {
-            window.samuelPageScrollLock.unlock();
+            if (document.body.classList.contains('samuel-upload-background-active') && window.samuelPageScrollLock.forceUnlock) {
+                window.samuelPageScrollLock.forceUnlock();
+            } else {
+                window.samuelPageScrollLock.unlock();
+            }
         }
         if (mediaHost) {
             mediaHost.innerHTML = '';

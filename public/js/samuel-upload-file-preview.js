@@ -30,6 +30,122 @@
         retainedUploadFiles = [];
     }
 
+    function reorderRetainedFiles(fromIndex, toIndex) {
+        if (fromIndex === toIndex) {
+            return;
+        }
+        if (fromIndex < 0 || toIndex < 0 || fromIndex >= retainedUploadFiles.length || toIndex >= retainedUploadFiles.length) {
+            return;
+        }
+        var files = retainedUploadFiles.slice();
+        var moved = files.splice(fromIndex, 1)[0];
+        files.splice(toIndex, 0, moved);
+        retainedUploadFiles = files;
+    }
+
+    function moveRetainedFile(index, delta) {
+        reorderRetainedFiles(index, index + delta);
+    }
+
+    function updateThumbsOrderHint(fileCount) {
+        var hint = document.getElementById('samuel-upload-thumbs-hint');
+        if (!hint) {
+            return;
+        }
+        hint.hidden = fileCount < 2;
+    }
+
+    function reorderControlsHtml(index, total) {
+        if (total < 2) {
+            return '';
+        }
+
+        var leftDisabled = index === 0 ? ' disabled' : '';
+        var rightDisabled = index === total - 1 ? ' disabled' : '';
+
+        return (
+            '<div class="samuel-upload-thumbs__reorder">' +
+            '<button type="button" class="samuel-upload-thumbs__move" data-samuel-thumb-move data-index="' +
+            index +
+            '" data-dir="-1"' +
+            leftDisabled +
+            ' aria-label="Mover antes"><i class="ri-arrow-left-s-line" aria-hidden="true"></i></button>' +
+            '<button type="button" class="samuel-upload-thumbs__move" data-samuel-thumb-move data-index="' +
+            index +
+            '" data-dir="1"' +
+            rightDisabled +
+            ' aria-label="Mover después"><i class="ri-arrow-right-s-line" aria-hidden="true"></i></button>' +
+            '</div>'
+        );
+    }
+
+    function bindThumbReorder(host) {
+        if (!host || host.dataset.reorderBound === '1') {
+            return;
+        }
+        host.dataset.reorderBound = '1';
+        host.addEventListener('click', function (event) {
+            var btn = event.target.closest('[data-samuel-thumb-move]');
+            if (!btn || btn.disabled) {
+                return;
+            }
+            event.preventDefault();
+            var index = parseInt(btn.getAttribute('data-index'), 10);
+            var dir = parseInt(btn.getAttribute('data-dir'), 10);
+            if (Number.isNaN(index) || Number.isNaN(dir)) {
+                return;
+            }
+            moveRetainedFile(index, dir);
+            refreshThumbOrderUi();
+        });
+    }
+
+    function refreshThumbOrderUi() {
+        var host = document.getElementById('samuel-upload-thumbs');
+        var files = getRetainedFiles();
+        updateThumbsOrderHint(files.length);
+        if (!host || !files.length) {
+            return;
+        }
+
+        var cells = Array.prototype.slice.call(host.querySelectorAll('.samuel-upload-thumbs__cell'));
+        if (cells.length !== files.length) {
+            renderInlineThumbs(files);
+            return;
+        }
+
+        var cellByKey = {};
+        cells.forEach(function (cell) {
+            var key = cell.getAttribute('data-file-key');
+            if (key) {
+                cellByKey[key] = cell;
+            }
+        });
+
+        var missing = false;
+        files.forEach(function (file, index) {
+            var key = cacheKey(file);
+            var cell = cellByKey[key];
+            if (!cell) {
+                missing = true;
+                return;
+            }
+            cell.setAttribute('data-thumb-index', String(index));
+            var badge = cell.querySelector('.samuel-upload-thumbs__badge');
+            if (badge) {
+                badge.textContent = String(index + 1);
+            }
+            var reorder = cell.querySelector('.samuel-upload-thumbs__reorder');
+            if (reorder) {
+                reorder.outerHTML = reorderControlsHtml(index, files.length);
+            }
+            host.appendChild(cell);
+        });
+        if (missing) {
+            renderInlineThumbs(files);
+        }
+    }
+
     function shouldSkipServerPreview(file) {
         return isVideoFile(file) || (file.size || 0) > 48 * 1024 * 1024;
     }
@@ -333,14 +449,18 @@
             return Promise.resolve();
         }
 
+        bindThumbReorder(host);
+
         revokeAll();
         host.innerHTML = '';
         if (!files || !files.length) {
             host.hidden = true;
+            updateThumbsOrderHint(0);
             return Promise.resolve();
         }
 
         host.hidden = false;
+        updateThumbsOrderHint(files.length);
         host.setAttribute('aria-busy', 'true');
 
         if (window.samuelGlobalProgress && files.length > 0) {
@@ -350,12 +470,16 @@
         var jobs = Array.prototype.map.call(files, function (file, index) {
             var cell = document.createElement('div');
             cell.className = 'samuel-upload-thumbs__cell';
+            cell.setAttribute('data-thumb-index', String(index));
+            cell.setAttribute('data-file-key', cacheKey(file));
             cell.innerHTML =
                 '<div class="samuel-upload-thumbs__loading" aria-hidden="true"></div>' +
-                '<span class="samuel-upload-thumbs__badge">' + (index + 1) + '</span>';
+                '<span class="samuel-upload-thumbs__badge">' + (index + 1) + '</span>' +
+                reorderControlsHtml(index, files.length);
             host.appendChild(cell);
 
             return resolvePreview(file).then(function (result) {
+                var reorderHtml = reorderControlsHtml(index, files.length);
                 cell.innerHTML = '';
                 var badge = document.createElement('span');
                 badge.className = 'samuel-upload-thumbs__badge';
@@ -374,6 +498,7 @@
                     play.className = 'samuel-upload-thumbs__play';
                     play.innerHTML = '<i class="ri-play-fill"></i>';
                     cell.appendChild(play);
+                    cell.insertAdjacentHTML('beforeend', reorderHtml);
                     return;
                 }
 
@@ -383,6 +508,7 @@
                     img.alt = file.name || '';
                     img.className = 'samuel-upload-thumbs__media';
                     cell.appendChild(img);
+                    cell.insertAdjacentHTML('beforeend', reorderHtml);
                     return;
                 }
 
@@ -392,7 +518,8 @@
                     '<span class="samuel-upload-thumbs__badge">' +
                     (index + 1) +
                     '</span>' +
-                    '<span class="samuel-upload-thumbs__note">Vista previa limitada; al publicar sí se sube.</span>';
+                    '<span class="samuel-upload-thumbs__note">Vista previa limitada; al publicar sí se sube.</span>' +
+                    reorderHtml;
             });
         });
 
@@ -415,6 +542,8 @@
         isVideoFile: isVideoFile,
         getRetainedFiles: getRetainedFiles,
         clearRetainedFiles: clearRetainedFiles,
+        moveRetainedFile: moveRetainedFile,
+        reorderRetainedFiles: reorderRetainedFiles,
         submitPublicationForm: submitPublicationForm,
     };
 

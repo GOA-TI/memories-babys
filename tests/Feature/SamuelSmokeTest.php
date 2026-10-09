@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\FamilyMember;
 use App\Models\FamilyNotification;
 use App\Models\MemoryPost;
+use App\Models\MemoryPostComment;
 use App\Models\SamuelProfile;
 use App\Support\AppTheme;
 use App\Support\FamilySession;
@@ -262,6 +263,7 @@ class SamuelSmokeTest extends TestCase
             ->assertSee('heic2any.min.js', false)
             ->assertSee('samuel-upload-preview.js', false)
             ->assertSee('samuel-post-carousel.js', false)
+            ->assertSee('samuel-upload-thumbs-hint', false)
             ->assertSee('Publicar recuerdo', false)
             ->assertSee('samuelUploadPreview', false);
     }
@@ -276,6 +278,122 @@ class SamuelSmokeTest extends TestCase
         ])
             ->assertOk()
             ->assertHeader('Content-Type', 'image/jpeg');
+    }
+
+    public function test_comment_notifies_post_author(): void
+    {
+        $author = $this->adminMember();
+        $other = $this->extraMember();
+
+        $post = MemoryPost::query()->create([
+            'family_member_id' => $author->id,
+            'caption' => 'Mi recuerdo',
+            'show_on_wall' => true,
+            'memory_taken_at' => now(),
+        ]);
+
+        FamilySession::login($other);
+
+        $this->postJson(route('posts.comment.store', $post), [
+            'body' => 'Qué bonito',
+        ])->assertOk();
+
+        $notification = FamilyNotification::query()
+            ->where('family_member_id', $author->id)
+            ->where('type', FamilyNotification::TYPE_POST_COMMENT)
+            ->first();
+
+        $this->assertNotNull($notification);
+        $this->assertStringContainsString('comentó tu recuerdo', $notification->title);
+        $this->assertSame($other->id, $notification->actor_family_member_id);
+    }
+
+    public function test_reaction_notifies_post_author(): void
+    {
+        $author = $this->adminMember();
+        $other = $this->extraMember();
+
+        $post = MemoryPost::query()->create([
+            'family_member_id' => $author->id,
+            'caption' => 'Para reaccionar',
+            'show_on_wall' => true,
+            'memory_taken_at' => now(),
+        ]);
+
+        FamilySession::login($other);
+
+        $this->post(route('posts.reaction', $post), [
+            'emotion' => 'love',
+        ], ['Accept' => 'application/json', 'X-Requested-With' => 'XMLHttpRequest'])
+            ->assertOk();
+
+        $notification = FamilyNotification::query()
+            ->where('family_member_id', $author->id)
+            ->where('type', FamilyNotification::TYPE_POST_REACTION)
+            ->first();
+
+        $this->assertNotNull($notification);
+        $this->assertStringContainsString('reaccionó', $notification->title);
+        $this->assertStringContainsString('❤️', $notification->body);
+    }
+
+    public function test_member_can_comment_and_reply_on_wall_post(): void
+    {
+        $author = $this->adminMember();
+        $other = $this->extraMember();
+
+        $post = MemoryPost::query()->create([
+            'family_member_id' => $author->id,
+            'caption' => 'Recuerdo en el muro',
+            'show_on_wall' => true,
+            'memory_taken_at' => now(),
+        ]);
+
+        FamilySession::login($other);
+
+        $this->postJson(route('posts.comment.store', $post), [
+            'body' => 'Qué lindo recuerdo',
+        ])
+            ->assertOk()
+            ->assertJsonPath('count', 1)
+            ->assertJsonPath('comments.0.body', 'Qué lindo recuerdo');
+
+        $parentId = MemoryPostComment::query()->where('memory_post_id', $post->id)->value('id');
+        $this->assertNotNull($parentId);
+
+        FamilySession::login($author);
+
+        $this->postJson(route('posts.comment.store', $post), [
+            'body' => 'Gracias por comentar',
+            'parent_comment_id' => $parentId,
+        ])
+            ->assertOk()
+            ->assertJsonPath('count', 2)
+            ->assertJsonPath('comments.0.replies.0.body', 'Gracias por comentar')
+            ->assertJsonPath('comments.0.replies.0.reply_to_name', 'Tío prueba');
+    }
+
+    public function test_wall_comments_toggle_markup_when_post_has_comments(): void
+    {
+        $member = $this->adminMember();
+        $post = MemoryPost::query()->create([
+            'family_member_id' => $member->id,
+            'caption' => 'Con comentarios',
+            'show_on_wall' => true,
+            'memory_taken_at' => now(),
+        ]);
+        $post->comments()->create([
+            'family_member_id' => $member->id,
+            'body' => 'Hola muro',
+        ]);
+
+        FamilySession::login($member);
+
+        $this->get(route('wall'))
+            ->assertOk()
+            ->assertSee('data-samuel-comments-toggle', false)
+            ->assertSee('Ocultar comentarios (1)', false)
+            ->assertSee('data-samuel-comment-reply', false);
     }
 
     public function test_wall_loads_media_lightbox(): void
