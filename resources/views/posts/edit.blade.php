@@ -1,5 +1,7 @@
 @extends('layouts.mobile', ['mobileNavActive' => 'memories'])
 
+@section('body_class', 'samuel-page-upload')
+
 @section('title', 'Editar publicación')
 
 @section('content')
@@ -59,7 +61,25 @@
     </form>
 @endsection
 
+@push('head')
+<script>
+(function () {
+    var meta = document.querySelector('meta[name="viewport"]');
+    if (meta) {
+        meta.setAttribute(
+            'content',
+            'width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content'
+        );
+    }
+})();
+</script>
+@endpush
+
 @push('scripts')
+@php
+    $uploadBottomNavJsV = file_exists(public_path('js/samuel-upload-bottom-nav.js')) ? filemtime(public_path('js/samuel-upload-bottom-nav.js')) : 1;
+@endphp
+<script src="{{ asset('js/samuel-upload-bottom-nav.js') }}?v={{ $uploadBottomNavJsV }}" defer></script>
 <script>
 (function () {
     var input = document.getElementById('media');

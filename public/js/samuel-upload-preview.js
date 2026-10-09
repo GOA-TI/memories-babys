@@ -272,7 +272,7 @@
         nodes.sheet.classList.add('is-open');
         nodes.backdrop.classList.add('is-open');
         document.body.classList.add('samuel-upload-preview-open');
-        if (window.samuelPageScrollLock) {
+        if (window.samuelPageScrollLock && !document.body.classList.contains('samuel-page-upload')) {
             window.samuelPageScrollLock.lock();
         }
 
@@ -289,7 +289,7 @@
         nodes.sheet.classList.remove('is-open');
         nodes.backdrop.classList.remove('is-open');
         document.body.classList.remove('samuel-upload-preview-open');
-        if (window.samuelPageScrollLock) {
+        if (window.samuelPageScrollLock && !document.body.classList.contains('samuel-page-upload')) {
             if (document.body.classList.contains('samuel-upload-background-active') && window.samuelPageScrollLock.forceUnlock) {
                 window.samuelPageScrollLock.forceUnlock();
             } else {

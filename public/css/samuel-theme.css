@@ -2873,7 +2873,10 @@ body.samuel-media-lightbox-open {
 /* Vista previa antes de publicar — modal centrado, botones siempre visibles */
 .samuel-upload-preview-backdrop {
     position: fixed;
-    inset: 0;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: var(--samuel-bottom-nav-h, 3.85rem);
     z-index: 125;
     touch-action: none;
     background: rgba(15, 23, 42, 0.52);
@@ -2890,7 +2893,10 @@ body.samuel-media-lightbox-open {
 
 .samuel-upload-preview {
     position: fixed;
-    inset: 0;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: var(--samuel-bottom-nav-h, 3.85rem);
     z-index: 130;
     display: flex;
     align-items: center;
@@ -2899,7 +2905,7 @@ body.samuel-media-lightbox-open {
     padding:
         max(0.65rem, env(safe-area-inset-top, 0px))
         max(0.75rem, env(safe-area-inset-right, 0px))
-        max(0.65rem, env(safe-area-inset-bottom, 0px))
+        max(0.35rem, env(safe-area-inset-bottom, 0px))
         max(0.75rem, env(safe-area-inset-left, 0px));
     pointer-events: none;
     opacity: 0;
@@ -2933,6 +2939,15 @@ body.samuel-upload-preview-open .cp-mobile-app__frame {
     pointer-events: none;
 }
 
+body.samuel-page-upload.samuel-upload-preview-open .cp-mobile-app__frame {
+    pointer-events: auto;
+}
+
+body.samuel-upload-preview-open .cp-mobile-bottom-nav {
+    z-index: 140;
+    pointer-events: auto !important;
+}
+
 body.samuel-upload-preview-open .samuel-upload-preview,
 body.samuel-upload-preview-open .samuel-upload-preview-backdrop {
     pointer-events: auto;
@@ -2940,7 +2955,13 @@ body.samuel-upload-preview-open .samuel-upload-preview-backdrop {
 
 .samuel-upload-preview__sheet {
     width: min(100%, 480px);
-    max-height: min(88dvh, calc(100dvh - 1.25rem - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)));
+    max-height: min(
+        78dvh,
+        calc(
+            100dvh - var(--samuel-bottom-nav-h, 3.85rem) - 1.25rem - env(safe-area-inset-top, 0px) -
+                env(safe-area-inset-bottom, 0px)
+        )
+    );
     min-height: 0;
     background: #fff;
     border-radius: 1.15rem;
@@ -4169,6 +4190,16 @@ body.samuel-page-upload .cp-mobile-app__frame {
 
 body.samuel-page-upload .samuel-main {
     padding-bottom: calc(1rem + var(--samuel-bottom-nav-h, 3.85rem));
+}
+
+body.samuel-page-upload .cp-mobile-bottom-nav {
+    z-index: 55;
+}
+
+body.samuel-page-upload.samuel-scroll-locked .cp-mobile-bottom-nav,
+body.samuel-page-upload.samuel-upload-preview-open .cp-mobile-bottom-nav,
+body.samuel-page-upload.samuel-upload-background-active .cp-mobile-bottom-nav {
+    z-index: 140;
 }
 
 .samuel-pwa-backdrop {

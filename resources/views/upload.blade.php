@@ -103,8 +103,23 @@
     @include('partials.upload-preview-sheet')
 @endpush
 
+@push('head')
+<script>
+(function () {
+    var meta = document.querySelector('meta[name="viewport"]');
+    if (meta) {
+        meta.setAttribute(
+            'content',
+            'width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content'
+        );
+    }
+})();
+</script>
+@endpush
+
 @push('scripts')
 @php
+    $uploadBottomNavJsV = file_exists(public_path('js/samuel-upload-bottom-nav.js')) ? filemtime(public_path('js/samuel-upload-bottom-nav.js')) : 1;
     $heic2anyV = file_exists(public_path('js/vendor/heic2any.min.js')) ? filemtime(public_path('js/vendor/heic2any.min.js')) : 1;
     $uploadFilePreviewV = file_exists(public_path('js/samuel-upload-file-preview.js')) ? filemtime(public_path('js/samuel-upload-file-preview.js')) : 1;
     $uploadPreviewJsV = file_exists(public_path('js/samuel-upload-preview.js')) ? filemtime(public_path('js/samuel-upload-preview.js')) : 1;
@@ -112,6 +127,7 @@
 <script src="{{ asset('js/vendor/heic2any.min.js') }}?v={{ $heic2anyV }}" defer></script>
 <script src="{{ asset('js/samuel-upload-file-preview.js') }}?v={{ $uploadFilePreviewV }}" defer></script>
 <script src="{{ asset('js/samuel-upload-preview.js') }}?v={{ $uploadPreviewJsV }}" defer></script>
+<script src="{{ asset('js/samuel-upload-bottom-nav.js') }}?v={{ $uploadBottomNavJsV }}" defer></script>
 <script>
 (function () {
     var legacy = document.getElementById('samuelUploadPublishing');
