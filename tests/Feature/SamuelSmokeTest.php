@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\FamilyMember;
+use App\Models\FamilyNotification;
 use App\Models\MemoryPost;
 use App\Models\SamuelProfile;
 use App\Support\AppTheme;
@@ -26,6 +27,21 @@ class SamuelSmokeTest extends TestCase
             'is_active' => true,
         ]);
         $member->setPin('6945');
+        $member->save();
+
+        return $member;
+    }
+
+    private function extraMember(): FamilyMember
+    {
+        $member = new FamilyMember([
+            'cedula' => '1007846946',
+            'name' => 'Tío prueba',
+            'avatar_emoji' => '🙂',
+            'is_admin' => false,
+            'is_active' => true,
+        ]);
+        $member->setPin('6946');
         $member->save();
 
         return $member;
@@ -191,6 +207,46 @@ class SamuelSmokeTest extends TestCase
         $post = MemoryPost::query()->latest('id')->first();
         $this->assertNotNull($post);
         $this->assertSame(2, $post->mediaItems()->count());
+    }
+
+    public function test_publish_notifies_other_active_members(): void
+    {
+        Storage::fake('local');
+        config(['samuel.storage_driver' => 'local']);
+
+        $author = $this->adminMember();
+        $other = $this->extraMember();
+        FamilySession::login($author);
+
+        $this->post(route('upload.store'), [
+            'memory_taken' => 'today',
+            'caption' => 'Hola familia',
+            'show_on_wall' => '1',
+            'media' => [UploadedFile::fake()->image('foto.jpg')],
+        ])->assertRedirect(route('memories.index'));
+
+        $this->assertSame(
+            1,
+            FamilyNotification::query()->where('family_member_id', $other->id)->count()
+        );
+
+        FamilySession::login($other);
+        $this->get(route('notifications.index'))
+            ->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('unread_count', 1);
+    }
+
+    public function test_authenticated_shell_includes_notification_bell_assets(): void
+    {
+        $member = $this->adminMember();
+        FamilySession::login($member);
+
+        $this->get(route('home'))
+            ->assertOk()
+            ->assertSee('id="samuelNotifOpen"', false)
+            ->assertSee('samuel-notifications.js', false)
+            ->assertSee('samuelNotificationsConfig', false);
     }
 
     public function test_upload_create_page_loads_preview_script(): void

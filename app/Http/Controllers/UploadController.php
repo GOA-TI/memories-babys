@@ -6,6 +6,7 @@ use App\Models\Album;
 use App\Models\DriveAccount;
 use App\Models\SamuelProfile;
 use App\Services\AvatarImageProcessor;
+use App\Services\FamilyNotificationService;
 use App\Services\MediaUploadService;
 use App\Services\MediaVideoPosterService;
 use App\Support\MemoryMomentInput;
@@ -66,7 +67,7 @@ class UploadController extends Controller
         ]);
     }
 
-    public function store(Request $request, MediaUploadService $uploader)
+    public function store(Request $request, MediaUploadService $uploader, FamilyNotificationService $notifier)
     {
         if (! $request->hasFile('media') && (int) $request->server('CONTENT_LENGTH') > 0) {
             $maxMb = (int) config('samuel.upload.max_mb', 300);
@@ -119,6 +120,12 @@ class UploadController extends Controller
             }
 
             return back()->withErrors(['media' => $e->getMessage()])->withInput();
+        }
+
+        try {
+            $notifier->notifyNewPost($post, $member);
+        } catch (\Throwable) {
+            // La publicación ya está guardada; no bloquear por avisos.
         }
 
         $redirect = redirect()

@@ -3740,7 +3740,7 @@ body.samuel-reactions-who-open {
     top: 0;
     z-index: 40;
     width: 100%;
-    overflow: hidden;
+    overflow: visible;
     flex-shrink: 0;
     display: flex;
     align-items: center;
@@ -3896,6 +3896,46 @@ body.samuel-reactions-who-open {
     min-height: 2.35rem;
     margin: 0.05rem 0;
     background: rgba(15, 23, 42, 0.12);
+}
+
+.samuel-mobile-topbar__bell-slot {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 2;
+    pointer-events: none;
+}
+
+.samuel-mobile-topbar__bell-slot .samuel-mobile-topbar__bell {
+    pointer-events: auto;
+}
+
+.samuel-app .samuel-mobile-topbar__bell.cp-mobile-topbar__bell {
+    width: 2.45rem;
+    height: 2.45rem;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--cp-primary) 10%, #fff);
+    color: color-mix(in srgb, var(--cp-primary) 85%, #334155);
+    box-shadow: 0 1px 0 rgba(15, 23, 42, 0.06);
+    border: 1px solid color-mix(in srgb, var(--cp-primary) 18%, #fff);
+}
+
+.samuel-app .samuel-mobile-topbar__bell.cp-mobile-topbar__bell i {
+    font-size: 1.2rem;
+}
+
+.samuel-notif-backdrop {
+    z-index: 155;
+}
+
+.samuel-notif-panel {
+    z-index: 160;
+    padding-top: calc(0.85rem + env(safe-area-inset-top, 0px));
+}
+
+body.samuel-notif-open {
+    overflow: hidden;
 }
 
 /* Iconos del header */

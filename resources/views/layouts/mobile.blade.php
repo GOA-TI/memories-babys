@@ -46,6 +46,7 @@
         $samuelGlobalProgressJsV = file_exists(public_path('js/samuel-global-progress.js')) ? filemtime(public_path('js/samuel-global-progress.js')) : 1;
         $samuelBackgroundUploadJsV = file_exists(public_path('js/samuel-background-upload.js')) ? filemtime(public_path('js/samuel-background-upload.js')) : 1;
         $samuelMediaLightboxJsV = file_exists(public_path('js/samuel-media-lightbox.js')) ? filemtime(public_path('js/samuel-media-lightbox.js')) : 1;
+        $samuelNotificationsJsV = file_exists(public_path('js/samuel-notifications.js')) ? filemtime(public_path('js/samuel-notifications.js')) : 1;
         $samuelBaseCssV = file_exists(public_path('css/samuel-mobile-base.css')) ? filemtime(public_path('css/samuel-mobile-base.css')) : 2;
     @endphp
     <link href="{{ asset('css/samuel-mobile-base.css') }}?v={{ $samuelBaseCssV }}" rel="stylesheet">
@@ -67,6 +68,9 @@
             @include('partials.mobile-topbar-brand')
         </div>
         @if($familyMember ?? null)
+            <div class="samuel-mobile-topbar__bell-slot" aria-hidden="false">
+                @include('partials.mobile-topbar-bell')
+            </div>
             <div class="samuel-mobile-topbar__spacer" aria-hidden="true"></div>
             <div class="samuel-mobile-topbar__actions">
                 @include('partials.mobile-topbar-user')
@@ -111,6 +115,7 @@
 @stack('overlays')
 
 @if($familyMember ?? null)
+    @include('partials.mobile-notifications')
     @include('partials.mobile-drawer')
     @include('partials.pwa-install-sheet')
     @include('partials.samuel-confirm-dialog')
@@ -123,6 +128,18 @@
     <script src="{{ asset('js/samuel-background-upload.js') }}?v={{ $samuelBackgroundUploadJsV }}" defer></script>
     <script src="{{ asset('js/samuel-hard-reload.js') }}?v={{ $samuelHardReloadJsV }}" defer></script>
     <script src="{{ asset('js/samuel-mobile-shell.js') }}?v={{ $samuelShellJsV }}" defer></script>
+    <script>
+        window.samuelNotificationsConfig = {
+            indexUrl: @json(route('notifications.index')),
+            markReadUrl: @json(route('notifications.mark-read', ['id' => '__ID__'])),
+            markAllReadUrl: @json(route('notifications.mark-all-read')),
+            pushVapidUrl: @json(route('notifications.push.vapid')),
+            pushSubscribeUrl: @json(route('notifications.push.subscribe')),
+            pushUnsubscribeUrl: @json(route('notifications.push.unsubscribe')),
+            swUrl: @json(asset('sw.js'))
+        };
+    </script>
+    <script src="{{ asset('js/samuel-notifications.js') }}?v={{ $samuelNotificationsJsV }}" defer></script>
     <script src="{{ asset('js/samuel-pwa-install.js') }}?v={{ $samuelPwaJsV }}" defer></script>
     <script src="{{ asset('js/samuel-media-load.js') }}?v={{ $samuelMediaLoadJsV }}" defer></script>
     <script src="{{ asset('js/samuel-media-lightbox.js') }}?v={{ $samuelMediaLightboxJsV }}" defer></script>

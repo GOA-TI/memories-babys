@@ -1,5 +1,5 @@
 /* Samuel Memorias — PWA (scope /) */
-const SW_VERSION = 'samuel-memorias-v8';
+const SW_VERSION = 'samuel-memorias-v9-push';
 const AVATAR_CACHE = 'samuel-avatar-images-v1';
 const UPLOAD_DB = 'samuel-background-uploads';
 const UPLOAD_STORE = 'jobs';
@@ -156,6 +156,76 @@ self.addEventListener('activate', function (event) {
 function isAvatarRequest(url) {
     return /\/familia\/\d+\/avatar/.test(url.pathname);
 }
+
+var SAMUEL_PUSH_ICON = '/images/pwa/icon-192.png';
+
+function pushAssetUrl(path) {
+    try {
+        return new URL(path, self.location.origin).href;
+    } catch (e) {
+        return path;
+    }
+}
+
+function absoluteSamuelUrl(targetUrl) {
+    if (!targetUrl || typeof targetUrl !== 'string') {
+        return self.location.origin + '/';
+    }
+    if (targetUrl.indexOf('http://') === 0 || targetUrl.indexOf('https://') === 0) {
+        return targetUrl;
+    }
+    try {
+        return new URL(targetUrl, self.location.origin).href;
+    } catch (e) {
+        return self.location.origin + targetUrl;
+    }
+}
+
+self.addEventListener('push', function (event) {
+    if (!event.data) {
+        return;
+    }
+
+    var payload = {};
+    try {
+        payload = event.data.json();
+    } catch (e) {
+        payload = { title: 'Memorias', body: event.data.text(), url: '/' };
+    }
+
+    var title = payload.title || 'Memorias';
+    var options = {
+        body: payload.body || '',
+        icon: payload.icon ? pushAssetUrl(payload.icon) : pushAssetUrl(SAMUEL_PUSH_ICON),
+        badge: payload.badge ? pushAssetUrl(payload.badge) : pushAssetUrl(SAMUEL_PUSH_ICON),
+        data: { url: payload.url || '/' },
+        tag: 'samuel-memorias',
+        renotify: true,
+    };
+
+    event.waitUntil(self.registration.showNotification(title, options));
+});
+
+self.addEventListener('notificationclick', function (event) {
+    event.notification.close();
+    var rawUrl = (event.notification.data && event.notification.data.url) ? event.notification.data.url : '/';
+    var targetUrl = absoluteSamuelUrl(rawUrl);
+
+    event.waitUntil(
+        clients.matchAll({ type: 'window', includeUncontrolled: true }).then(function (clientList) {
+            for (var i = 0; i < clientList.length; i++) {
+                var client = clientList[i];
+                if ('focus' in client && 'navigate' in client) {
+                    client.navigate(targetUrl);
+                    return client.focus();
+                }
+            }
+            if (clients.openWindow) {
+                return clients.openWindow(targetUrl);
+            }
+        })
+    );
+});
 
 self.addEventListener('fetch', function (event) {
     if (event.request.method !== 'GET') {

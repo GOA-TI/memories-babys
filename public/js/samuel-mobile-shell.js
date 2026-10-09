@@ -39,17 +39,28 @@
         }
     }
 
+    function closeDrawerIfOpen() {
+        var drawer = document.getElementById('cpMobileDrawer');
+        if (drawer && drawer.classList.contains('is-open')) {
+            var closeBtn = document.getElementById('cpMobileMenuClose');
+            if (closeBtn) {
+                closeBtn.click();
+            }
+        }
+    }
+
     var openBtn = document.getElementById('cpMobileMenuOpen');
     var closeBtn = document.getElementById('cpMobileMenuClose');
     var drawer = document.getElementById('cpMobileDrawer');
     var backdrop = document.getElementById('cpMobileDrawerBackdrop');
 
-    function setOpen(open) {
+    function setDrawerOpen(open) {
         if (!drawer || !backdrop) {
             return;
         }
         if (open) {
             closeUploadPreviewIfOpen();
+            setNotifOpen(false);
         }
         drawer.classList.toggle('is-open', open);
         backdrop.classList.toggle('is-open', open);
@@ -64,24 +75,67 @@
 
     if (openBtn) {
         openBtn.addEventListener('click', function () {
-            setOpen(true);
+            setDrawerOpen(true);
         });
     }
     if (closeBtn) {
         closeBtn.addEventListener('click', function () {
-            setOpen(false);
+            setDrawerOpen(false);
         });
     }
     if (backdrop) {
         backdrop.addEventListener('click', function () {
-            setOpen(false);
+            setDrawerOpen(false);
+        });
+    }
+
+    var notifOpen = document.getElementById('samuelNotifOpen');
+    var notifClose = document.getElementById('samuelNotifClose');
+    var notifPanel = document.getElementById('samuelNotifPanel');
+    var notifBackdrop = document.getElementById('samuelNotifBackdrop');
+
+    function setNotifOpen(open) {
+        if (!notifPanel || !notifBackdrop) {
+            return;
+        }
+        if (open) {
+            closeUploadPreviewIfOpen();
+            closeDrawerIfOpen();
+        }
+        notifPanel.classList.toggle('is-open', open);
+        notifBackdrop.hidden = !open;
+        notifPanel.setAttribute('aria-hidden', open ? 'false' : 'true');
+        document.body.classList.toggle('samuel-notif-open', open);
+        if (open) {
+            window.samuelPageScrollLock.lock();
+            if (window.samuelNotificationManager) {
+                window.samuelNotificationManager.loadNotifications();
+            }
+        } else {
+            window.samuelPageScrollLock.unlock();
+        }
+    }
+
+    if (notifOpen) {
+        notifOpen.addEventListener('click', function () {
+            setNotifOpen(true);
+        });
+    }
+    if (notifClose) {
+        notifClose.addEventListener('click', function () {
+            setNotifOpen(false);
+        });
+    }
+    if (notifBackdrop) {
+        notifBackdrop.addEventListener('click', function () {
+            setNotifOpen(false);
         });
     }
 
     var reloadBtn = document.getElementById('samuelDrawerReload');
     if (reloadBtn) {
         reloadBtn.addEventListener('click', function () {
-            setOpen(false);
+            setDrawerOpen(false);
             if (typeof window.samuelHardReload === 'function') {
                 window.samuelHardReload();
             } else {

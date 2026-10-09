@@ -62,6 +62,27 @@ Tras editar JSON:
 php artisan samuel:sync-drive-accounts
 ```
 
+### Alertas push (campana + celular)
+
+In-app: campana centrada en el header. Push Web (como portal Gym): requiere claves VAPID en el servidor.
+
+```bash
+# Una vez (local o VPS, no commitear la clave privada)
+./vendor/bin/web-push generate-vapid-keys
+```
+
+Copia `Public Key` y `Private Key` a `.env`:
+
+```env
+VAPID_SUBJECT=mailto:tu@email.com
+VAPID_PUBLIC_KEY=...
+VAPID_PRIVATE_KEY=...
+```
+
+Tras desplegar: `php artisan config:cache`. En el móvil, abre la campana → **Activar alertas en este celular**. En iPhone hace falta tener la PWA en pantalla de inicio.
+
+Al publicar un recuerdo, el resto de familiares activos reciben aviso in-app y push (si están suscritos).
+
 ## Uso
 
 1. Entra en `/login` con cédula + clave familiar.
