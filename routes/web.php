@@ -1,0 +1,81 @@
+<?php
+
+use App\Http\Controllers\Admin\AlbumAdminController;
+use App\Http\Controllers\Admin\DriveAccountAdminController;
+use App\Http\Controllers\Admin\R2AdminController;
+use App\Http\Controllers\Admin\MemberAdminController;
+use App\Http\Controllers\Admin\SamuelAdminController;
+use App\Http\Controllers\Admin\ThemeAdminController;
+use App\Http\Controllers\SamuelController;
+use App\Http\Controllers\AlbumController;
+use App\Http\Controllers\AuthController;
+use App\Http\Controllers\HomeController;
+use App\Http\Controllers\MediaController;
+use App\Http\Controllers\MemoryPostController;
+use App\Models\MemoryMedia;
+use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\PostCommentController;
+use App\Http\Controllers\ReactionController;
+use App\Http\Controllers\MyMemoriesController;
+use App\Http\Controllers\UploadController;
+use App\Http\Controllers\WallController;
+use App\Http\Controllers\WelcomeController;
+use Illuminate\Support\Facades\Route;
+
+Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
+Route::post('/login', [AuthController::class, 'login'])->name('login.submit');
+Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+
+Route::middleware('family')->group(function () {
+    Route::get('/', HomeController::class)->name('home');
+    Route::post('/bienvenida/vista', [WelcomeController::class, 'markSeen'])->name('welcome.seen');
+    Route::get('/samuel', [SamuelController::class, 'show'])->name('samuel.show');
+    Route::get('/mi-perfil', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::put('/mi-perfil', [ProfileController::class, 'update'])->name('profile.update');
+    Route::get('/familia/{member}', [ProfileController::class, 'show'])->name('members.show');
+    Route::redirect('/mi-parentesco', '/mi-perfil');
+    Route::get('/perfil/{member}/avatar', [ProfileController::class, 'avatar'])->name('profile.avatar');
+    Route::get('/muro', WallController::class)->name('wall');
+    Route::get('/mis-recuerdos', [MyMemoriesController::class, 'index'])->name('memories.index');
+    Route::get('/mis-recuerdos/nuevo', [UploadController::class, 'create'])->name('upload.create');
+    Route::post('/mis-recuerdos/nuevo', [UploadController::class, 'store'])->name('upload.store');
+    Route::post('/mis-recuerdos/vista-previa', [UploadController::class, 'preview'])->name('upload.preview');
+    Route::redirect('/subir', '/mis-recuerdos/nuevo');
+    Route::get('/carpetas', [AlbumController::class, 'index'])->name('albums.index');
+    Route::get('/carpetas/{album:slug}', [AlbumController::class, 'show'])->name('albums.show');
+    Route::post('/publicacion/{post}/favorito', [MediaController::class, 'toggleFavorite'])->name('posts.favorite');
+    Route::post('/publicacion/{post}/reaccion', [ReactionController::class, 'store'])->name('posts.reaction');
+    Route::post('/publicacion/{post}/comentario', [PostCommentController::class, 'store'])->name('posts.comment.store');
+    Route::delete('/comentario/{comment}', [PostCommentController::class, 'destroy'])->name('posts.comment.destroy');
+    Route::get('/publicacion/{post}/editar', [MemoryPostController::class, 'edit'])->name('posts.edit');
+    Route::put('/publicacion/{post}', [MemoryPostController::class, 'update'])->name('posts.update');
+    Route::delete('/publicacion/{post}', [MemoryPostController::class, 'destroy'])->name('posts.destroy');
+    Route::get('/media/{media}/archivo', [MediaController::class, 'serve'])->name('media.serve');
+    Route::get('/media/{media}/descargar', [MediaController::class, 'download'])->name('media.download');
+    Route::get('/recuerdo/{media}/editar', fn (MemoryMedia $media) => redirect()->route('posts.edit', $media->memory_post_id))->name('media.edit');
+});
+
+Route::middleware(['family', 'family.admin'])->prefix('admin')->name('admin.')->group(function () {
+    Route::get('/', fn () => view('admin.home'))->name('home');
+    Route::get('/samuel', [SamuelAdminController::class, 'edit'])->name('samuel.edit');
+    Route::put('/samuel', [SamuelAdminController::class, 'update'])->name('samuel.update');
+    Route::get('/tonos', [ThemeAdminController::class, 'edit'])->name('theme.edit');
+    Route::put('/tonos', [ThemeAdminController::class, 'update'])->name('theme.update');
+    Route::get('/personas', [MemberAdminController::class, 'index'])->name('members.index');
+    Route::get('/personas/nuevo', [MemberAdminController::class, 'create'])->name('members.create');
+    Route::get('/personas/{member}/editar', [MemberAdminController::class, 'edit'])->name('members.edit');
+    Route::post('/personas', [MemberAdminController::class, 'store'])->name('members.store');
+    Route::post('/personas/{member}/toggle', [MemberAdminController::class, 'toggle'])->name('members.toggle');
+    Route::put('/personas/{member}', [MemberAdminController::class, 'update'])->name('members.update');
+    Route::post('/personas/{member}/nueva-clave', [MemberAdminController::class, 'resetPin'])->name('members.reset-pin');
+    Route::delete('/personas/{member}', [MemberAdminController::class, 'destroy'])->name('members.destroy');
+    Route::get('/carpetas', [AlbumAdminController::class, 'index'])->name('albums.index');
+    Route::post('/carpetas', [AlbumAdminController::class, 'store'])->name('albums.store');
+    Route::post('/carpetas/{album}/sync-drive', [AlbumAdminController::class, 'syncDrive'])->name('albums.sync-drive');
+    Route::get('/drive', [DriveAccountAdminController::class, 'index'])->name('drive.index');
+    Route::post('/drive', [DriveAccountAdminController::class, 'store'])->name('drive.store');
+    Route::put('/drive/{driveAccount}', [DriveAccountAdminController::class, 'update'])->name('drive.update');
+    Route::post('/drive/{driveAccount}/probar', [DriveAccountAdminController::class, 'test'])->name('drive.test');
+    Route::get('/r2', [R2AdminController::class, 'index'])->name('r2.index');
+    Route::post('/r2/probar', [R2AdminController::class, 'test'])->name('r2.test');
+});
