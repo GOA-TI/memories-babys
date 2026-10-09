@@ -247,6 +247,8 @@ class MediaUploadService
             $uploadFile = $this->temporaryUploadedFile($prepared);
         }
 
+        $uploadFile = app(MediaVideoStreamPrepService::class)->fastStartIfNeeded($uploadFile);
+
         $nameForSlug = $prepared?->filename ?? $file->getClientOriginalName();
         $safeName = Str::slug(pathinfo((string) $nameForSlug, PATHINFO_FILENAME)) ?: 'recuerdo';
         $ext = pathinfo((string) ($prepared?->filename ?? ''), PATHINFO_EXTENSION)
@@ -257,7 +259,7 @@ class MediaUploadService
             'target_name' => $safeName,
             'extension' => $ext,
             'mime_type' => $prepared?->mimeType ?? ($file->getMimeType() ?: 'application/octet-stream'),
-            'bytes' => $prepared !== null ? strlen($prepared->contents) : (int) $file->getSize(),
+            'bytes' => $prepared !== null ? strlen($prepared->contents) : (int) $uploadFile->getSize(),
             'prepared' => $prepared,
         ];
     }

@@ -40,6 +40,12 @@
             if (nextIndex !== current && slides[nextIndex] && typeof window.samuelLoadMediaIn === 'function') {
                 window.samuelLoadMediaIn(slides[nextIndex]);
             }
+            slides.forEach(function (slide, i) {
+                if (i === current || i === nextIndex) {
+                    return;
+                }
+                pauseVideosIn(slide);
+            });
         }
 
         var prev = root.querySelector('[data-carousel-prev]');

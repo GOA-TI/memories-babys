@@ -40,6 +40,7 @@
         }
         if (el.tagName === 'VIDEO' && !el.getAttribute('src')) {
             el.src = deferred;
+            el.preload = el.getAttribute('preload') || 'metadata';
             el.load();
         }
         el.removeAttribute('data-samuel-src');

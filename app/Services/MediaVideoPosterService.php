@@ -10,9 +10,9 @@ use Symfony\Component\HttpFoundation\Response;
 
 class MediaVideoPosterService
 {
-    private const JPEG_QUALITY = 78;
+    private const JPEG_QUALITY = 72;
 
-    private const MAX_WIDTH = 720;
+    private const MAX_WIDTH = 520;
 
     public function __construct(
         private readonly R2StorageService $r2Storage,
@@ -88,6 +88,10 @@ class MediaVideoPosterService
 
     public function respond(MemoryMedia $media): Response
     {
+        if (filled($media->poster_public_url)) {
+            return redirect()->away($media->poster_public_url);
+        }
+
         if (filled($media->poster_path)) {
             $disk = $media->storage_disk === 'r2' ? 'r2' : 'local';
             if (Storage::disk($disk)->exists($media->poster_path)) {

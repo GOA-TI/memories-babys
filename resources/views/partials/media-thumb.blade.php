@@ -14,6 +14,7 @@
         $lightboxPayload = [
             'type' => $isVideo ? 'video' : 'image',
             'url' => $viewerUrl,
+            'poster' => $isVideo ? $item->feedPosterUrl() : null,
             'download' => $item->appDownloadUrl(),
             'filename' => $item->original_name ?: ($isVideo ? 'video.mp4' : 'recuerdo.jpg'),
             'caption' => $item->caption,

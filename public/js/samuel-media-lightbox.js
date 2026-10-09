@@ -55,6 +55,51 @@
         });
     }
 
+    function mountVideoPlayer(item) {
+        contentEl.innerHTML = '';
+
+        function startPlayback() {
+            contentEl.innerHTML = '';
+            var video = document.createElement('video');
+            video.src = item.url;
+            video.controls = true;
+            video.playsInline = true;
+            video.preload = 'auto';
+            video.className = 'samuel-media-lightbox__video';
+            contentEl.appendChild(video);
+            video.play().catch(function () {});
+        }
+
+        if (item.poster) {
+            var tap = document.createElement('button');
+            tap.type = 'button';
+            tap.className = 'samuel-media-lightbox__video-tap';
+            tap.setAttribute('aria-label', 'Reproducir video');
+
+            var poster = document.createElement('img');
+            poster.src = item.poster;
+            poster.alt = item.caption || item.filename || 'Video';
+            poster.className = 'samuel-media-lightbox__poster';
+            poster.decoding = 'async';
+            poster.loading = 'eager';
+
+            var play = document.createElement('span');
+            play.className = 'samuel-media-lightbox__play-badge';
+            play.innerHTML = '<i class="ri-play-fill" aria-hidden="true"></i>';
+
+            tap.appendChild(poster);
+            tap.appendChild(play);
+            tap.addEventListener('click', function () {
+                startPlayback();
+            });
+            contentEl.appendChild(tap);
+
+            return;
+        }
+
+        startPlayback();
+    }
+
     function renderSlide() {
         pauseVideos();
         contentEl.innerHTML = '';
@@ -64,13 +109,7 @@
         }
 
         if (item.type === 'video') {
-            var video = document.createElement('video');
-            video.src = item.url;
-            video.controls = true;
-            video.playsInline = true;
-            video.preload = 'metadata';
-            video.className = 'samuel-media-lightbox__video';
-            contentEl.appendChild(video);
+            mountVideoPlayer(item);
         } else {
             var img = document.createElement('img');
             img.src = item.url;
