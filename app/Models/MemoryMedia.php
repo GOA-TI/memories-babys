@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\Storage;
@@ -53,6 +54,17 @@ class MemoryMedia extends Model
     public function album(): BelongsTo
     {
         return $this->belongsTo(Album::class);
+    }
+
+    /** Fotos/videos que pertenecen a la carpeta (directo o vía publicación). */
+    public function scopeInAlbum(Builder $query, Album|int $album): Builder
+    {
+        $albumId = $album instanceof Album ? $album->id : $album;
+
+        return $query->where(function (Builder $inner) use ($albumId) {
+            $inner->where('album_id', $albumId)
+                ->orWhereHas('post', fn (Builder $post) => $post->where('album_id', $albumId));
+        });
     }
 
     public function driveAccount(): BelongsTo

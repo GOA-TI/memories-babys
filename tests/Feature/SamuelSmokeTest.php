@@ -2,7 +2,9 @@
 
 namespace Tests\Feature;
 
+use App\Models\Album;
 use App\Models\FamilyMember;
+use App\Models\MemoryMedia;
 use App\Models\FamilyNotification;
 use App\Models\MemoryPost;
 use App\Models\MemoryPostComment;
@@ -335,6 +337,48 @@ class SamuelSmokeTest extends TestCase
         $this->assertNotNull($notification);
         $this->assertStringContainsString('reaccionó', $notification->title);
         $this->assertStringContainsString('❤️', $notification->body);
+    }
+
+    public function test_album_show_lists_every_media_file_in_folder(): void
+    {
+        $member = $this->adminMember();
+        FamilySession::login($member);
+
+        $album = Album::query()->create([
+            'slug' => 'prueba-carpeta',
+            'title' => 'Prueba carpeta',
+            'emoji' => '📁',
+            'color' => '#fef3c7',
+            'sort_order' => 1,
+            'is_visible' => true,
+        ]);
+
+        $post = MemoryPost::query()->create([
+            'family_member_id' => $member->id,
+            'album_id' => $album->id,
+            'caption' => 'Varias en carpeta',
+            'show_on_wall' => true,
+            'memory_taken_at' => now(),
+        ]);
+
+        foreach (['uno.jpg', 'dos.jpg', 'tres.jpg'] as $i => $name) {
+            MemoryMedia::query()->create([
+                'memory_post_id' => $post->id,
+                'sort_order' => $i,
+                'family_member_id' => $member->id,
+                'album_id' => $album->id,
+                'original_name' => $name,
+                'mime_type' => 'image/jpeg',
+                'storage_disk' => 'local',
+                'local_path' => 'test/'.$name,
+                'show_on_wall' => true,
+            ]);
+        }
+
+        $response = $this->get(route('albums.show', $album));
+        $response->assertOk();
+        $response->assertSee('samuel-grid__item', false);
+        $this->assertSame(3, substr_count($response->getContent(), 'samuel-grid__item'));
     }
 
     public function test_member_can_comment_and_reply_on_wall_post(): void

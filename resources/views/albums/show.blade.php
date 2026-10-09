@@ -12,16 +12,14 @@
     </div>
 
     <div class="samuel-grid">
-        @forelse($posts as $post)
+        @forelse($mediaItems as $item)
             <article class="samuel-grid__item">
-                @if($post->coverMedia())
-                    @include('partials.media-thumb', ['item' => $post->coverMedia()])
-                @endif
+                @include('partials.media-thumb', ['item' => $item, 'defer' => true])
             </article>
         @empty
             <p class="samuel-home-empty">Esta carpeta está esperando el primer recuerdo.</p>
         @endforelse
     </div>
 
-    <div class="samuel-pagination-wrap">{{ $posts->links() }}</div>
+    <div class="samuel-pagination-wrap">{{ $mediaItems->links() }}</div>
 @endsection

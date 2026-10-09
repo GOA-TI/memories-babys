@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Album;
-use App\Models\MemoryPost;
+use App\Models\MemoryMedia;
 use Illuminate\View\View;
 
 class AlbumController extends Controller
@@ -12,23 +12,33 @@ class AlbumController extends Controller
     {
         $albums = Album::query()
             ->where('is_visible', true)
-            ->withCount('posts')
             ->orderBy('sort_order')
             ->get();
 
-        return view('albums.index', compact('albums'));
+        $countsByAlbum = MemoryMedia::query()
+            ->leftJoin('memory_posts', 'memory_posts.id', '=', 'memory_media.memory_post_id')
+            ->where(function ($query) {
+                $query->whereNotNull('memory_media.album_id')
+                    ->orWhereNotNull('memory_posts.album_id');
+            })
+            ->selectRaw('COALESCE(memory_media.album_id, memory_posts.album_id) as album_id, COUNT(*) as total')
+            ->groupBy('album_id')
+            ->pluck('total', 'album_id');
+
+        return view('albums.index', compact('albums', 'countsByAlbum'));
     }
 
     public function show(Album $album): View
     {
         abort_unless($album->is_visible, 404);
 
-        $posts = MemoryPost::query()
-            ->with(['member', 'mediaItems'])
-            ->where('album_id', $album->id)
-            ->latest()
-            ->paginate(24);
+        $mediaItems = MemoryMedia::query()
+            ->with(['member', 'post'])
+            ->inAlbum($album)
+            ->orderByDesc('memory_media.created_at')
+            ->orderByDesc('memory_media.id')
+            ->paginate(36);
 
-        return view('albums.show', compact('album', 'posts'));
+        return view('albums.show', compact('album', 'mediaItems'));
     }
 }

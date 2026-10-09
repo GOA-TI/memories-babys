@@ -16,7 +16,16 @@
                 <span class="samuel-album-tile__emoji">{{ $album->emoji }}</span>
                 <span>
                     <span class="samuel-album-tile__title d-block">{{ $album->title }}</span>
-                    <span class="small text-muted">{{ $album->posts_count }} publicaciones</span>
+                    @php
+                        $mediaCount = (int) ($countsByAlbum[$album->id] ?? 0);
+                    @endphp
+                    <span class="small text-muted">
+                        @if($mediaCount === 1)
+                            1 foto o video
+                        @else
+                            {{ $mediaCount }} fotos y videos
+                        @endif
+                    </span>
                 </span>
             </a>
         @endforeach
